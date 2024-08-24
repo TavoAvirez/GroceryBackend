@@ -1,96 +1,84 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
+using System.Linq;
 
-namespace TiendaBackend.Controllers
+[Route("api/[controller]")]
+[ApiController]
+public class ProductsController : ControllerBase
 {
-    /// <summary>
-    /// Controlador para gestionar productos.
-    /// </summary>
-    [Route("api/[controller]")]
-    [ApiController]
-    public class ProductsController : ControllerBase
+    private readonly ProductsContext _context;
+
+    public ProductsController(ProductsContext context)
     {
-        private readonly List<Product> _products;
+        _context = context;
 
-        public ProductsController()
+        // Inicializar la base de datos con algunos productos si está vacía
+        if (!_context.Products.Any())
         {
-            // Inicializar la lista de productos
-            _products = new List<Product>
+            _context.Products.AddRange(new List<Product>
             {
-                new Product { Id = 1, Name = "Producto 1", Price = 10.99 },
-                new Product { Id = 2, Name = "Producto 2", Price = 19.99 },
-                new Product { Id = 3, Name = "Producto 3", Price = 7.99 }
-            };
-        }
-
-        // GET: api/products
-        /// <summary>
-        /// Obtiene la lista de productos
-        /// </summary>
-        /// <returns>lista de productos</returns>
-        [HttpGet]
-        public ActionResult<IEnumerable<Product>> Get()
-        {
-            return _products;
-        }
-
-        // GET: api/products/{id}
-        /// <summary>
-        /// Obtiene un producto por su id
-        /// </summary>
-        /// <param name="id">el id del producto</param>
-        /// <returns>el producto que coincida con el id</returns>
-        [HttpGet("{id}")]
-        public ActionResult<Product> Get(int id)
-        {
-            var product = _products.Find(p => p.Id == id);
-            if (product == null)
-            {
-                return NotFound();
-            }
-            return product;
-        }
-
-        // POST: api/products
-        [HttpPost]
-        public ActionResult<Product> Post(Product product)
-        {
-            _products.Add(product);
-            return CreatedAtAction(nameof(Get), new { id = product.Id }, product);
-        }
-
-        // PUT: api/products/{id}
-        [HttpPut("{id}")]
-        public IActionResult Put(int id, Product updatedProduct)
-        {
-            var product = _products.Find(p => p.Id == id);
-            if (product == null)
-            {
-                return NotFound();
-            }
-            product.Name = updatedProduct.Name;
-            product.Price = updatedProduct.Price;
-            return NoContent();
-        }
-
-        // DELETE: api/products/{id}
-        [HttpDelete("{id}")]
-        public IActionResult Delete(int id)
-        {
-            var product = _products.Find(p => p.Id == id);
-            if (product == null)
-            {
-                return NotFound();
-            }
-            _products.Remove(product);
-            return NoContent();
+                new Product { Name = "Producto 1", Price = 100 },
+                new Product { Name = "Producto 2", Price = 200 },
+                new Product { Name = "Producto 3", Price = 300 }
+            });
+            _context.SaveChanges();
         }
     }
 
-    public class Product
+    // GET: api/products
+    [HttpGet]
+    public ActionResult<IEnumerable<Product>> Get()
     {
-        public int Id { get; set; }
-        public string Name { get; set; }
-        public double Price { get; set; }
+        return _context.Products.ToList();
+    }
+
+    // GET: api/products/{id}
+    [HttpGet("{id}")]
+    public ActionResult<Product> Get(int id)
+    {
+        var product = _context.Products.Find(id);
+        if (product == null)
+        {
+            return NotFound();
+        }
+        return product;
+    }
+
+    // POST: api/products
+    [HttpPost]
+    public ActionResult<Product> Post(Product product)
+    {
+        _context.Products.Add(product);
+        _context.SaveChanges();
+        return CreatedAtAction(nameof(Get), new { id = product.Id }, product);
+    }
+
+    // PUT: api/products/{id}
+    [HttpPut("{id}")]
+    public IActionResult Put(int id, Product updatedProduct)
+    {
+        var product = _context.Products.Find(id);
+        if (product == null)
+        {
+            return NotFound();
+        }
+        product.Name = updatedProduct.Name;
+        product.Price = updatedProduct.Price;
+        _context.SaveChanges();
+        return NoContent();
+    }
+
+    // DELETE: api/products/{id}
+    [HttpDelete("{id}")]
+    public IActionResult Delete(int id)
+    {
+        var product = _context.Products.Find(id);
+        if (product == null)
+        {
+            return NotFound();
+        }
+        _context.Products.Remove(product);
+        _context.SaveChanges();
+        return NoContent();
     }
 }
