@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 
 [Route("api/[controller]")]
 [ApiController]
@@ -46,39 +48,61 @@ public class ProductsController : ControllerBase
 
     // POST: api/products
     [HttpPost]
-    public ActionResult<Product> Post(Product product)
+    public async Task<ActionResult<Product>> Post([FromForm] Product product)
     {
+        var image = HttpContext.Request.Form.Files.FirstOrDefault();
+
+        if (image != null)
+        {
+            using var memoryStream = new System.IO.MemoryStream();
+            await image.CopyToAsync(memoryStream);
+            product.Image = memoryStream.ToArray();
+        }
+
         _context.Products.Add(product);
-        _context.SaveChanges();
+        await _context.SaveChangesAsync();
         return CreatedAtAction(nameof(Get), new { id = product.Id }, product);
     }
 
     // PUT: api/products/{id}
     [HttpPut("{id}")]
-    public IActionResult Put(int id, Product updatedProduct)
+    public async Task<IActionResult> Put(int id, [FromForm] Product updatedProduct)
     {
         var product = _context.Products.Find(id);
         if (product == null)
         {
             return NotFound();
         }
+
         product.Name = updatedProduct.Name;
         product.Price = updatedProduct.Price;
-        _context.SaveChanges();
+        product.Image = updatedProduct.Image;
+        var image = HttpContext.Request.Form.Files.FirstOrDefault();
+        if (image != null)
+        {
+            using var memoryStream = new System.IO.MemoryStream();
+            await image.CopyToAsync(memoryStream);
+            product.Image = memoryStream.ToArray();
+        }
+
+        await _context.SaveChangesAsync();
+        // string base64String = Convert.ToBase64String(product.Image);
+        // return CreatedAtAction(nameof(Get), new { id = product.Id }, base64String);
         return NoContent();
     }
 
     // DELETE: api/products/{id}
     [HttpDelete("{id}")]
-    public IActionResult Delete(int id)
+    public async Task<IActionResult> Delete(int id)
     {
         var product = _context.Products.Find(id);
         if (product == null)
         {
             return NotFound();
         }
+
         _context.Products.Remove(product);
-        _context.SaveChanges();
+        await _context.SaveChangesAsync();
         return NoContent();
     }
 }
