@@ -77,6 +77,7 @@ public class ProductsController : ControllerBase
         product.Name = updatedProduct.Name;
         product.Price = updatedProduct.Price;
         product.Image = updatedProduct.Image;
+        product.Quantity = updatedProduct.Quantity;
         var image = HttpContext.Request.Form.Files.FirstOrDefault();
         if (image != null)
         {
